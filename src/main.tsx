@@ -11,6 +11,8 @@ import './index.css';
 const widgetApiPromise = WidgetApiImpl.create({
   // Запрашиваем необходимые capabilities при старте
   capabilities: [
+    // Требуем полноценного Element клиента (предотвращает "Wrong widget registration")
+    'io.element.requires_client' as any,
     // Разрешаем получать и отправлять события реакций
     WidgetEventCapability.forRoomEvent(EventDirection.Send, 'm.reaction'),
     WidgetEventCapability.forRoomEvent(EventDirection.Receive, 'm.reaction'),

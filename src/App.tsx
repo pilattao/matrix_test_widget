@@ -13,7 +13,7 @@ export function App({
   widgetApiPromise: Promise<WidgetApi>;
 }): ReactElement {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/matrix_test_widget">
       <MuiThemeProvider>
         <MuiWidgetApiProvider
           widgetApiPromise={widgetApiPromise}
@@ -27,6 +27,7 @@ export function App({
         >
           <Routes>
             <Route path="/" element={<RatingWidget />} />
+            <Route path="/*" element={<RatingWidget />} />
           </Routes>
         </MuiWidgetApiProvider>
       </MuiThemeProvider>
