@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/matrix_test_widget/static/css/main.26e0be70.css",
+    "main.js": "/matrix_test_widget/static/js/main.cb830c88.js",
+    "index.html": "/matrix_test_widget/index.html",
+    "main.26e0be70.css.map": "/matrix_test_widget/static/css/main.26e0be70.css.map",
+    "main.cb830c88.js.map": "/matrix_test_widget/static/js/main.cb830c88.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.26e0be70.css",
+    "static/js/main.cb830c88.js"
+  ]
+}

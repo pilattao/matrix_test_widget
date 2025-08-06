@@ -1,0 +1,13 @@
+{
+  "name": "Оценка бота",
+  "description": "React виджет для оценки ответов бота звёздочками",
+  "type": "com.comind.bot-rating",
+  "version": "2.0.0",
+  "framework": "React + Matrix Widget Toolkit",
+  "features": [
+    "Интерактивная оценка звёздочками",
+    "Отправка реакций в Matrix",
+    "Правильная регистрация виджета",
+    "Responsive дизайн"
+  ]
+}
