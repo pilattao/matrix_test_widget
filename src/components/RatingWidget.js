@@ -1,35 +1,25 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { WidgetApi } from 'matrix-widget-api';
+import { useWidgetApi } from '@matrix-widget-toolkit/react';
+import {
+  Box,
+  Typography,
+  Rating,
+  Paper,
+  Alert,
+  CircularProgress,
+  Fade,
+} from '@mui/material';
+import { Star, StarBorder } from '@mui/icons-material';
 
 const RatingWidget = () => {
   const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(-1);
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [widgetApi, setWidgetApi] = useState(null);
+  const [alertSeverity, setAlertSeverity] = useState('info');
 
-  // Инициализируем Widget API
-  useEffect(() => {
-    const api = new WidgetApi();
-    api.start();
-    
-    try {
-      api.sendContentLoaded();
-    } catch (e) {
-      console.log('Локальное тестирование - sendContentLoaded не требуется');
-    }
-
-    try {
-      api.requestCapabilities([
-        'org.matrix.msc2762.send_event.m.reaction',
-        'org.matrix.msc2762.receive_event',
-      ]);
-    } catch (e) {
-      console.log('Локальное тестирование - capabilities не требуются');
-    }
-
-    setWidgetApi(api);
-  }, []);
+  // Используем Nordeck Widget API
+  const widgetApi = useWidgetApi();
 
   // Получаем event_id из URL параметров
   const getEventId = useCallback(() => {
@@ -37,101 +27,154 @@ const RatingWidget = () => {
     return urlParams.get('event_id');
   }, []);
 
-  const sendRating = useCallback(async (stars) => {
-    if (!widgetApi) {
-      setFeedback('API не готов');
-      return;
-    }
+  // Инициализация и запрос прав
+  useEffect(() => {
+    if (!widgetApi) return;
 
-    const eventId = getEventId();
-    if (!eventId) {
-      setFeedback('Локальное тестирование - реакция не отправлена');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setFeedback('Отправляем оценку...');
-
-    try {
-      await widgetApi.sendEvent('m.reaction', {
-        'm.relates_to': {
-          rel_type: 'm.annotation',
-          event_id: eventId,
-          key: `rating:${stars}`
-        }
+    // Запрашиваем необходимые права
+    widgetApi
+      .requestCapabilities([
+        'org.matrix.msc2762.send_event.m.reaction',
+        'org.matrix.msc2762.receive_event',
+      ])
+      .catch((e) => {
+        console.log('Локальное тестирование - capabilities не требуются:', e);
       });
-      
-      setFeedback(`Спасибо! Вы поставили ${stars} ${stars === 1 ? 'звезду' : stars < 5 ? 'звезды' : 'звёзд'}`);
-    } catch (error) {
-      console.error('Ошибка отправки реакции:', error);
-      setFeedback('Ошибка при отправке оценки');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [widgetApi, getEventId]);
 
-  const handleStarClick = useCallback((stars) => {
-    if (isSubmitting) return;
-    
-    setRating(stars);
-    sendRating(stars);
-  }, [sendRating, isSubmitting]);
+    // Уведомляем о готовности
+    widgetApi.sendContentLoaded().catch((e) => {
+      console.log(
+        'Локальное тестирование - sendContentLoaded не требуется:',
+        e
+      );
+    });
+  }, [widgetApi]);
 
-  const handleStarHover = useCallback((stars) => {
-    if (!isSubmitting) {
-      setHoverRating(stars);
-    }
-  }, [isSubmitting]);
+  const sendRating = useCallback(
+    async (stars) => {
+      if (!widgetApi) {
+        setFeedback('Widget API не готов');
+        setAlertSeverity('error');
+        return;
+      }
 
-  const handleMouseLeave = useCallback(() => {
-    setHoverRating(0);
-  }, []);
+      const eventId = getEventId();
+      if (!eventId) {
+        setFeedback('Режим предварительного просмотра - реакция не отправлена');
+        setAlertSeverity('info');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setFeedback('Отправляем оценку...');
+      setAlertSeverity('info');
+
+      try {
+        await widgetApi.sendRoomEvent('m.reaction', {
+          'm.relates_to': {
+            rel_type: 'm.annotation',
+            event_id: eventId,
+            key: `rating:${stars}`,
+          },
+        });
+
+        const starsText =
+          stars === 1 ? 'звезду' : stars < 5 ? 'звезды' : 'звёзд';
+        setFeedback(`Спасибо! Вы поставили ${stars} ${starsText}`);
+        setAlertSeverity('success');
+      } catch (error) {
+        console.error('Ошибка отправки реакции:', error);
+        setFeedback('Ошибка при отправке оценки');
+        setAlertSeverity('error');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [widgetApi, getEventId]
+  );
+
+  const handleRatingChange = useCallback(
+    (event, newValue) => {
+      if (isSubmitting || newValue === null) return;
+
+      setRating(newValue);
+      sendRating(newValue);
+    },
+    [sendRating, isSubmitting]
+  );
 
   // Проверяем наличие event_id при загрузке
   useEffect(() => {
     const eventId = getEventId();
     if (!eventId) {
       setFeedback('Режим предварительного просмотра');
+      setAlertSeverity('info');
     }
   }, [getEventId]);
 
-  const renderStars = () => {
-    const stars = [];
-    const displayRating = hoverRating || rating;
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2,
+        maxWidth: 320,
+        background: 'transparent',
+      }}
+    >
+      <Typography
+        variant="subtitle2"
+        component="h3"
+        gutterBottom
+        sx={{
+          color: 'text.secondary',
+          mb: 1,
+        }}
+      >
+        Оцените ответ бота
+      </Typography>
 
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <span
-          key={i}
-          className={`star ${i <= displayRating ? 'active' : ''}`}
-          onClick={() => handleStarClick(i)}
-          onMouseEnter={() => handleStarHover(i)}
-          style={{ 
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            opacity: isSubmitting ? 0.6 : 1
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Rating
+          name="bot-rating"
+          value={rating}
+          onChange={handleRatingChange}
+          onChangeActive={(event, newHover) => {
+            if (!isSubmitting) {
+              setHoverRating(newHover);
+            }
+          }}
+          size="large"
+          icon={<Star fontSize="inherit" />}
+          emptyIcon={<StarBorder fontSize="inherit" />}
+          disabled={isSubmitting}
+          sx={{
+            '& .MuiRating-iconFilled': {
+              color: '#f5b301',
+            },
+            '& .MuiRating-iconHover': {
+              color: '#f5b301',
+            },
+          }}
+        />
+
+        {isSubmitting && <CircularProgress size={20} sx={{ ml: 1 }} />}
+      </Box>
+
+      <Fade in={Boolean(feedback)} timeout={300}>
+        <Alert
+          severity={alertSeverity}
+          sx={{
+            fontSize: '0.75rem',
+            py: 0.5,
+            '& .MuiAlert-message': {
+              fontSize: '0.75rem',
+            },
           }}
         >
-          ★
-        </span>
-      );
-    }
-
-    return stars;
-  };
-
-  return (
-    <div className="rating-widget">
-      <h3 className="rating-title">Оцените ответ бота</h3>
-      <div 
-        className="stars-container" 
-        onMouseLeave={handleMouseLeave}
-      >
-        {renderStars()}
-      </div>
-      <div className="rating-feedback">
-        {feedback}
-      </div>
-    </div>
+          {feedback}
+        </Alert>
+      </Fade>
+    </Paper>
   );
 };
 

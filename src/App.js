@@ -1,11 +1,17 @@
 import React from 'react';
+import { WidgetApiProvider } from '@matrix-widget-toolkit/react';
+import { MuiThemeProvider } from '@matrix-widget-toolkit/mui';
+import { CssBaseline } from '@mui/material';
 import RatingWidget from './components/RatingWidget';
 
 function App() {
   return (
-    <div className="app">
-      <RatingWidget />
-    </div>
+    <WidgetApiProvider>
+      <MuiThemeProvider>
+        <CssBaseline />
+        <RatingWidget />
+      </MuiThemeProvider>
+    </WidgetApiProvider>
   );
 }
 
