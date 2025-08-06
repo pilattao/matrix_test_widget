@@ -1,53 +1,95 @@
-<!-- index.html -->
-<!DOCTYPE html><html lang="ru"><head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>⭐ Bot rating widget</title>
-    <script src="./matrix-widget-api.umd.js"></script>
-    <style>
-     body{font-family:system-ui;margin:0;padding:8px}
-     #stars{display:flex;gap:6px;font-size:32px;cursor:pointer}
-     .star{color:#ccc;transition:color .2s}
-     .star.active{color:#f5b301}
-    </style></head><body>
-    <h3>Оцените ответ бота</h3>
-    <div id="stars">
-      <span class="star" data-v="1">☆</span><span class="star" data-v="2">☆</span>
-      <span class="star" data-v="3">☆</span><span class="star" data-v="4">☆</span>
-      <span class="star" data-v="5">☆</span>
-    </div>
-    
-    <script>(async()=>{
-      const api=new matrixWidgetApi.MatrixWidgetApi();
-      await api.requestCapabilities([
-        'org.matrix.msc2762.send_event.m.reaction',
-        'org.matrix.msc2762.receive_event'
-      ]);
-    
-      const target=api.widgetParameters['event_id'];          // ID сообщения бота
-      const stars=[...document.querySelectorAll('.star')];
-      let chosen=0;
-      const paint=()=>stars.forEach(el=>{
-         const v=+el.dataset.v;
-         el.textContent=v<=chosen?'★':'☆';
-         el.classList.toggle('active',v<=chosen);
-      });
-    
-      const send=async v=>{
-        chosen=v; paint();
-        if(!target) return;
-        await api.sendEvent('m.reaction',{
-          'm.relates_to':{rel_type:'m.annotation',event_id:target,key:`rating:${v}`}
-        });
-      };
-      stars.forEach(el=>el.onclick=()=>send(+el.dataset.v));
-    
-      api.observeEventRelations(target,'m.annotation','m.reaction')
-         .subscribe(evts=>{
-           const me=api.widgetInfo?.userId;
-           const mine=evts.find(e=>e.sender===me&&e.content['m.relates_to'].key.startsWith('rating:'));
-           if(mine){chosen=+mine.content['m.relates_to'].key.split(':')[1]; paint();}
-         });
-      paint();
-    })();</script></body></html>
-    
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>⭐ Bot rating widget</title>
+
+<!-- Минимальная стилизация -->
+<style>
+  :root { font-family: system-ui, sans-serif; }
+  body   { margin: 0; padding: 12px; }
+  h3     { margin: 0 0 12px; font-size: 18px; }
+  #stars { display: flex; gap: 6px; font-size: 32px; cursor: pointer; }
+  .star  { color: #ccc; transition: color .2s; user-select: none; }
+  .star.active { color: #f5b301; }
+</style>
+</head>
+<body>
+
+<h3>Оцените ответ бота</h3>
+<div id="stars">
+  <span class="star" data-v="1">☆</span><span class="star" data-v="2">☆</span>
+  <span class="star" data-v="3">☆</span><span class="star" data-v="4">☆</span>
+  <span class="star" data-v="5">☆</span>
+</div>
+
+<!-- ⬇⬇   ВЕСЬ JS   ⬇⬇ -->
+<script type="module">
+/*
+ * matrix-widget-api больше не публикует UMD; берём ESM-бандл напрямую с CDN
+ * '?...&module' заставляет unpkg отдать модульную версию.
+ */
+import { MatrixWidgetApi } from
+  'https://unpkg.com/matrix-widget-api@1.13.1/lib/index.js?module';
+
+/* ----------------- НАСТРОЙКИ ----------------- */
+const api = new MatrixWidgetApi();
+
+/* event_id передаётся параметром ?event_id=$abc... */
+const target = new URLSearchParams(location.search).get('event_id') ?? undefined;
+
+/* Запрашиваем нужные права, но НЕ ждём — UI должен работать сразу */
+api.requestCapabilities([
+  'org.matrix.msc2762.send_event.m.reaction',
+  'org.matrix.msc2762.receive_event',
+]).catch(console.error);
+
+/* ----------------- UI: звёзды ----------------- */
+const stars  = [...document.querySelectorAll('.star')];
+let   chosen = 0;
+
+const paint = () => stars.forEach(el => {
+  const v = +el.dataset.v;
+  el.textContent = v <= chosen ? '★' : '☆';
+  el.classList.toggle('active', v <= chosen);
+});
+
+const send = async v => {
+  chosen = v; paint();
+  if (!target) return;                            // нет event_id → локальный режим
+  try {
+    await api.sendEvent('m.reaction', {
+      'm.relates_to': {
+        rel_type : 'm.annotation',
+        event_id : target,
+        key      : `rating:${v}`,
+      },
+    });
+  } catch (e) { console.error(e); }
+};
+
+/* клики по звёздам */
+stars.forEach(el => el.addEventListener('click', () => send(+el.dataset.v)));
+
+/* при перезагрузке выясняем, какую звезду мы уже ставили */
+api.requestCapabilities(['org.matrix.msc2762.receive_event']).then(() => {
+  if (!target) return;
+  api.observeEventRelations(target, 'm.annotation', 'm.reaction')
+     .subscribe(evts => {
+       const me   = api.widgetInfo?.userId;
+       const mine = evts.find(e =>
+         e.sender === me &&
+         e.content['m.relates_to']?.key?.startsWith('rating:'));
+       if (mine) {
+         chosen = +mine.content['m.relates_to'].key.split(':')[1];
+         paint();
+       }
+     });
+}).catch(console.error);
+
+paint();        // первичная отрисовка
+</script>
+
+</body>
+</html>
