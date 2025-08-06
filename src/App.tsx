@@ -4,16 +4,8 @@ import {
   MuiThemeProvider,
   MuiWidgetApiProvider,
 } from '@matrix-widget-toolkit/mui';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
 import RatingWidget from './components/RatingWidget';
-
-// Создаем базовую тему
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-  },
-});
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 export function App({
   widgetApiPromise,
@@ -21,22 +13,23 @@ export function App({
   widgetApiPromise: Promise<WidgetApi>;
 }): ReactElement {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <BrowserRouter>
       <MuiThemeProvider>
         <MuiWidgetApiProvider
           widgetApiPromise={widgetApiPromise}
           widgetRegistration={{
             name: 'Rating Widget',
             type: 'space.comind.rating.widget',
-            data: { 
-              title: 'Оценка бота'
+            data: {
+              title: 'Оценка бота',
             },
           }}
         >
-          <RatingWidget />
+          <Routes>
+            <Route path="/" element={<RatingWidget />} />
+          </Routes>
         </MuiWidgetApiProvider>
       </MuiThemeProvider>
-    </ThemeProvider>
+    </BrowserRouter>
   );
 }

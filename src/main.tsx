@@ -15,10 +15,20 @@ const widgetApiPromise = WidgetApiImpl.create({
     WidgetEventCapability.forRoomEvent(EventDirection.Send, 'm.reaction'),
     WidgetEventCapability.forRoomEvent(EventDirection.Receive, 'm.reaction'),
     // Разрешаем получать события сообщений
-    WidgetEventCapability.forRoomEvent(EventDirection.Receive, 'm.room.message'),
+    WidgetEventCapability.forRoomEvent(
+      EventDirection.Receive,
+      'm.room.message'
+    ),
     // Разрешаем работать с модульными виджетами
-    WidgetEventCapability.forStateEvent(EventDirection.Send, 'im.vector.modular.widgets'),
-    WidgetEventCapability.forStateEvent(EventDirection.Receive, 'im.vector.modular.widgets'),
+    WidgetEventCapability.forStateEvent(
+      EventDirection.Send,
+      'im.vector.modular.widgets'
+    ),
+    WidgetEventCapability.forStateEvent(
+      EventDirection.Receive,
+      'im.vector.modular.widgets'
+    ),
+    WidgetEventCapability.forStateEvent(EventDirection.Receive, 'm.room.name'),
   ],
 });
 
@@ -27,5 +37,5 @@ const root = createRoot(container!);
 root.render(
   <React.StrictMode>
     <App widgetApiPromise={widgetApiPromise} />
-  </React.StrictMode>,
+  </React.StrictMode>
 );

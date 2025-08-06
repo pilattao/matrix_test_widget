@@ -122,7 +122,10 @@ const RatingWidget: React.FC = () => {
           name="bot-rating"
           value={rating}
           onChange={handleRatingChange}
-          onChangeActive={(_event: React.SyntheticEvent, newHover: number): void => {
+          onChangeActive={(
+            _event: React.SyntheticEvent,
+            newHover: number
+          ): void => {
             if (!isSubmitting) {
               setHoverRating(newHover);
             }
