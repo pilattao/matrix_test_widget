@@ -1,0 +1,53 @@
+<!-- index.html -->
+<!DOCTYPE html><html lang="ru"><head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>⭐ Bot rating widget</title>
+    <script src="https://unpkg.com/matrix-widget-api@1.4.0/dist/matrix-widget-api.umd.js"></script>
+    <style>
+     body{font-family:system-ui;margin:0;padding:8px}
+     #stars{display:flex;gap:6px;font-size:32px;cursor:pointer}
+     .star{color:#ccc;transition:color .2s}
+     .star.active{color:#f5b301}
+    </style></head><body>
+    <h3>Оцените ответ бота</h3>
+    <div id="stars">
+      <span class="star" data-v="1">☆</span><span class="star" data-v="2">☆</span>
+      <span class="star" data-v="3">☆</span><span class="star" data-v="4">☆</span>
+      <span class="star" data-v="5">☆</span>
+    </div>
+    
+    <script>(async()=>{
+      const api=new matrixWidgetApi.MatrixWidgetApi();
+      await api.requestCapabilities([
+        'org.matrix.msc2762.send_event.m.reaction',
+        'org.matrix.msc2762.receive_event'
+      ]);
+    
+      const target=api.widgetParameters['event_id'];          // ID сообщения бота
+      const stars=[...document.querySelectorAll('.star')];
+      let chosen=0;
+      const paint=()=>stars.forEach(el=>{
+         const v=+el.dataset.v;
+         el.textContent=v<=chosen?'★':'☆';
+         el.classList.toggle('active',v<=chosen);
+      });
+    
+      const send=async v=>{
+        chosen=v; paint();
+        if(!target) return;
+        await api.sendEvent('m.reaction',{
+          'm.relates_to':{rel_type:'m.annotation',event_id:target,key:`rating:${v}`}
+        });
+      };
+      stars.forEach(el=>el.onclick=()=>send(+el.dataset.v));
+    
+      api.observeEventRelations(target,'m.annotation','m.reaction')
+         .subscribe(evts=>{
+           const me=api.widgetInfo?.userId;
+           const mine=evts.find(e=>e.sender===me&&e.content['m.relates_to'].key.startsWith('rating:'));
+           if(mine){chosen=+mine.content['m.relates_to'].key.split(':')[1]; paint();}
+         });
+      paint();
+    })();</script></body></html>
+    
