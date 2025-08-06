@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="widget:dimensions" content="280x60" />
 <title>⭐ Bot rating widget</title>
 
 <!-- Минимальная стилизация -->
 <style>
   :root { font-family: system-ui, sans-serif; }
-  body   { margin: 0; padding: 12px; }
-  h3     { margin: 0 0 12px; font-size: 18px; }
-  #stars { display: flex; gap: 6px; font-size: 32px; cursor: pointer; }
+  body   { margin: 0; padding: 8px; background: transparent; }
+  h3     { margin: 0 0 8px; font-size: 14px; color: #666; }
+  #stars { display: flex; gap: 4px; font-size: 24px; cursor: pointer; }
   .star  { color: #ccc; transition: color .2s; user-select: none; }
   .star.active { color: #f5b301; }
 </style>
