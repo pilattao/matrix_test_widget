@@ -16,6 +16,9 @@ const widgetApiPromise = WidgetApiImpl.create({
     WidgetEventCapability.forRoomEvent(EventDirection.Receive, 'm.reaction'),
     // Разрешаем получать события сообщений
     WidgetEventCapability.forRoomEvent(EventDirection.Receive, 'm.room.message'),
+    // Разрешаем работать с модульными виджетами
+    WidgetEventCapability.forStateEvent(EventDirection.Send, 'im.vector.modular.widgets'),
+    WidgetEventCapability.forStateEvent(EventDirection.Receive, 'im.vector.modular.widgets'),
   ],
 });
 
