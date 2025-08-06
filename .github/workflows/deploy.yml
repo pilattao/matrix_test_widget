@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Сборка проекта
+  # Сборка TypeScript проекта с Yarn + Vite
   build:
     runs-on: ubuntu-latest
     
@@ -32,14 +32,17 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
-        cache: 'npm'
+        node-version: '20'
+        cache: 'yarn'
         
     - name: Install dependencies
-      run: npm ci
+      run: yarn install --frozen-lockfile
+      
+    - name: Type check
+      run: yarn type-check
       
     - name: Build project
-      run: npm run build
+      run: yarn build
       
     - name: Setup Pages
       uses: actions/configure-pages@v4

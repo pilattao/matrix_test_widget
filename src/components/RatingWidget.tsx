@@ -8,21 +8,22 @@ import {
   Alert,
   CircularProgress,
   Fade,
+  AlertColor,
 } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
 
-const RatingWidget = () => {
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(-1);
-  const [feedback, setFeedback] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [alertSeverity, setAlertSeverity] = useState('info');
+const RatingWidget: React.FC = () => {
+  const [rating, setRating] = useState<number>(0);
+  const [, setHoverRating] = useState<number>(-1);
+  const [feedback, setFeedback] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info');
 
   // Используем Nordeck Widget API
   const widgetApi = useWidgetApi();
 
   // Получаем event_id из URL параметров
-  const getEventId = useCallback(() => {
+  const getEventId = useCallback((): string | null => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('event_id');
   }, []);
@@ -41,17 +42,19 @@ const RatingWidget = () => {
         console.log('Локальное тестирование - capabilities не требуются:', e);
       });
 
-    // Уведомляем о готовности
-    widgetApi.sendContentLoaded().catch((e) => {
-      console.log(
-        'Локальное тестирование - sendContentLoaded не требуется:',
-        e
-      );
-    });
+    // Уведомляем о готовности (если метод существует)
+    if ('sendContentLoaded' in widgetApi) {
+      (widgetApi as any).sendContentLoaded().catch((e: any) => {
+        console.log(
+          'Локальное тестирование - sendContentLoaded не требуется:',
+          e
+        );
+      });
+    }
   }, [widgetApi]);
 
   const sendRating = useCallback(
-    async (stars) => {
+    async (stars: number): Promise<void> => {
       if (!widgetApi) {
         setFeedback('Widget API не готов');
         setAlertSeverity('error');
@@ -94,7 +97,7 @@ const RatingWidget = () => {
   );
 
   const handleRatingChange = useCallback(
-    (event, newValue) => {
+    (_event: React.SyntheticEvent, newValue: number | null): void => {
       if (isSubmitting || newValue === null) return;
 
       setRating(newValue);
@@ -138,7 +141,7 @@ const RatingWidget = () => {
           name="bot-rating"
           value={rating}
           onChange={handleRatingChange}
-          onChangeActive={(event, newHover) => {
+          onChangeActive={(_event: React.SyntheticEvent, newHover: number): void => {
             if (!isSubmitting) {
               setHoverRating(newHover);
             }

@@ -15,4 +15,16 @@ export default defineConfig({
   preview: {
     port: 3000,
   },
+  esbuild: {
+    loader: 'tsx',
+    include: /src\/.*\.[tj]sx?$/,
+    exclude: [],
+  },
+  define: {
+    global: 'globalThis',
+    'process.env': {},
+  },
+  optimizeDeps: {
+    include: ['@matrix-widget-toolkit/api', '@matrix-widget-toolkit/react', '@matrix-widget-toolkit/mui'],
+  },
 });
