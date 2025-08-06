@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Widget Events</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .theme-btn {
+            background: #2196F3;
+            color: white;
+        }
+        .event-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .widget-frame {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .log {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Widget Events</h1>
+        <p>Используйте кнопки ниже для тестирования обработчиков событий виджета:</p>
+        
+        <div>
+            <button class="theme-btn" onclick="changeTheme('light')">Светлая тема</button>
+            <button class="theme-btn" onclick="changeTheme('dark')">Темная тема</button>
+        </div>
+        
+        <div>
+            <button class="event-btn" onclick="sendTestEvent()">Отправить тестовое событие</button>
+            <button class="event-btn" onclick="sendRatingEvent()">Отправить событие рейтинга</button>
+        </div>
+        
+        <iframe 
+            id="widgetFrame" 
+            class="widget-frame" 
+            src="/matrix_test_widget/?event_id=test123&theme=light">
+        </iframe>
+        
+        <div class="log" id="log">
+            <div>Лог событий появится здесь...</div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const widgetFrame = document.getElementById('widgetFrame');
+        
+        function addLog(message) {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function changeTheme(theme) {
+            addLog(`Отправляем смену темы: ${theme}`);
+            
+            widgetFrame.contentWindow.postMessage({
+                action: 'theme_change',
+                data: { theme: theme },
+                requestId: Math.random().toString(36).substring(7)
+            }, '*');
+        }
+        
+        function sendTestEvent() {
+            addLog('Отправляем тестовое событие');
+            
+            widgetFrame.contentWindow.postMessage({
+                action: 'send_event',
+                data: {
+                    type: 'm.room.message',
+                    content: {
+                        msgtype: 'm.text',
+                        body: 'Тестовое сообщение от виджета'
+                    }
+                },
+                requestId: Math.random().toString(36).substring(7)
+            }, '*');
+        }
+        
+        function sendRatingEvent() {
+            addLog('Отправляем событие рейтинга');
+            
+            widgetFrame.contentWindow.postMessage({
+                action: 'send_event',
+                data: {
+                    type: 'm.reaction',
+                    content: {
+                        'm.relates_to': {
+                            rel_type: 'm.annotation',
+                            event_id: 'test123',
+                            key: 'rating:5'
+                        }
+                    }
+                },
+                requestId: Math.random().toString(36).substring(7)
+            }, '*');
+        }
+        
+        // Слушаем ответы от виджета
+        window.addEventListener('message', (event) => {
+            if (event.source === widgetFrame.contentWindow) {
+                if (event.data.response) {
+                    addLog(`Получен ответ: ${JSON.stringify(event.data.response)}`);
+                } else if (event.data.error) {
+                    addLog(`Получена ошибка: ${event.data.error}`);
+                }
+            }
+        });
+        
+        addLog('Тестовая страница загружена');
+    </script>
+</body>
+</html>

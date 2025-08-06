@@ -7,6 +7,26 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: transparent;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Светлая тема (по умолчанию) */
+[data-theme="light"] body,
+body {
+  color: #333;
+}
+
+/* Темная тема */
+[data-theme="dark"] body {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .rating-title {
+  color: #cccccc;
+}
+
+[data-theme="dark"] .rating-feedback {
+  color: #aaaaaa;
 }
 
 * {

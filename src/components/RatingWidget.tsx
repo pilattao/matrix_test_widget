@@ -11,6 +11,7 @@ import {
   AlertColor,
 } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
+import { useWidgetEventHandlers } from '../hooks/useWidgetEventHandlers';
 
 const RatingWidget: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
@@ -21,6 +22,9 @@ const RatingWidget: React.FC = () => {
 
   // Используем Nordeck Widget API
   const widgetApi = useWidgetApi();
+  
+  // Используем кастомный хук для обработки событий виджета
+  const { theme } = useWidgetEventHandlers();
 
   // Получаем event_id из URL параметров
   const getEventId = useCallback((): string | null => {
@@ -103,6 +107,7 @@ const RatingWidget: React.FC = () => {
         p: 2,
         maxWidth: 320,
         background: 'transparent',
+        color: theme === 'dark' ? '#ffffff' : 'inherit',
       }}
     >
       <Typography
@@ -110,7 +115,7 @@ const RatingWidget: React.FC = () => {
         component="h3"
         gutterBottom
         sx={{
-          color: 'text.secondary',
+          color: theme === 'dark' ? '#cccccc' : 'text.secondary',
           mb: 1,
         }}
       >
