@@ -32,25 +32,17 @@ const RatingWidget: React.FC = () => {
   useEffect(() => {
     if (!widgetApi) return;
 
-    // Запрашиваем необходимые права
+    // Запрашиваем необходимые права для отправки реакций
     widgetApi
       .requestCapabilities([
         'org.matrix.msc2762.send_event.m.reaction',
         'org.matrix.msc2762.receive_event',
       ])
       .catch((e) => {
-        console.log('Локальное тестирование - capabilities не требуются:', e);
+        console.log('Не удалось запросить capabilities (возможно, локальная разработка):', e);
       });
 
-    // Уведомляем о готовности (если метод существует)
-    if ('sendContentLoaded' in widgetApi) {
-      (widgetApi as any).sendContentLoaded().catch((e: any) => {
-        console.log(
-          'Локальное тестирование - sendContentLoaded не требуется:',
-          e
-        );
-      });
-    }
+    console.log('Widget API инициализирован');
   }, [widgetApi]);
 
   const sendRating = useCallback(
