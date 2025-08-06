@@ -18,7 +18,9 @@ export function App({
         widgetRegistration={{
           name: 'Rating Widget',
           type: 'space.comining.rating.clock',
-          data: { title: 'Оценка бота' },
+          data: { 
+            title: 'Оценка бота'
+          },
         }}
       >
         <RatingWidget />
