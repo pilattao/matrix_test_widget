@@ -28,20 +28,9 @@ const RatingWidget: React.FC = () => {
     return urlParams.get('event_id');
   }, []);
 
-  // Инициализация и запрос прав
+  // Инициализация
   useEffect(() => {
     if (!widgetApi) return;
-
-    // Запрашиваем необходимые права для отправки реакций
-    widgetApi
-      .requestCapabilities([
-        'org.matrix.msc2762.send_event.m.reaction',
-        'org.matrix.msc2762.receive_event',
-      ])
-      .catch((e) => {
-        console.log('Не удалось запросить capabilities (возможно, локальная разработка):', e);
-      });
-
     console.log('Widget API инициализирован');
   }, [widgetApi]);
 
