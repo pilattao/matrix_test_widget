@@ -24,71 +24,83 @@
   <span class="star" data-v="5">☆</span>
 </div>
 
+<!-- ⬇⬇   ЗАГРУЗКА MATRIX WIDGET API   ⬇⬇ -->
+<script src="api.min.js"></script>
+
 <!-- ⬇⬇   ВЕСЬ JS   ⬇⬇ -->
-<script type="module">
+<script>
 /*
- * matrix-widget-api больше не публикует UMD; берём ESM-бандл напрямую с CDN
- * '?...&module' заставляет unpkg отдать модульную версию.
+ * Используем UMD версию matrix-widget-api для работы без бандлера
+ * После загрузки скрипта API доступен под mxwidgets
  */
-import { MatrixWidgetApi } from
-  'https://unpkg.com/matrix-widget-api@1.13.1/lib/index.js?module';
 
 /* ----------------- НАСТРОЙКИ ----------------- */
-const api = new MatrixWidgetApi();
+// Дожидаемся загрузки DOM и инициализируем API
+document.addEventListener('DOMContentLoaded', () => {
+  // mxwidgets является функцией, нужно её вызвать для получения экспортов
+  const widgetApi = mxwidgets();
+  
+  // Инициализируем API
+  const api = new widgetApi.WidgetApi();
 
-/* event_id передаётся параметром ?event_id=$abc... */
-const target = new URLSearchParams(location.search).get('event_id') ?? undefined;
+  /* event_id передаётся параметром ?event_id=$abc... */
+  const target = new URLSearchParams(location.search).get('event_id') ?? undefined;
 
-/* Запрашиваем нужные права, но НЕ ждём — UI должен работать сразу */
-api.requestCapabilities([
-  'org.matrix.msc2762.send_event.m.reaction',
-  'org.matrix.msc2762.receive_event',
-]).catch(console.error);
+  /* Запускаем API */
+  api.start();
 
-/* ----------------- UI: звёзды ----------------- */
-const stars  = [...document.querySelectorAll('.star')];
-let   chosen = 0;
-
-const paint = () => stars.forEach(el => {
-  const v = +el.dataset.v;
-  el.textContent = v <= chosen ? '★' : '☆';
-  el.classList.toggle('active', v <= chosen);
-});
-
-const send = async v => {
-  chosen = v; paint();
-  if (!target) return;                            // нет event_id → локальный режим
+  /* Уведомляем клиент, что виджет готов */
   try {
-    await api.sendEvent('m.reaction', {
-      'm.relates_to': {
-        rel_type : 'm.annotation',
-        event_id : target,
-        key      : `rating:${v}`,
-      },
-    });
-  } catch (e) { console.error(e); }
-};
+    api.sendContentLoaded();
+  } catch (e) {
+    console.log('Локальное тестирование - sendContentLoaded не требуется');
+  }
 
-/* клики по звёздам */
-stars.forEach(el => el.addEventListener('click', () => send(+el.dataset.v)));
+  /* Запрашиваем нужные права, но НЕ ждём — UI должен работать сразу */
+  try {
+    api.requestCapabilities([
+      'org.matrix.msc2762.send_event.m.reaction',
+      'org.matrix.msc2762.receive_event',
+    ]);
+  } catch (e) {
+    console.log('Локальное тестирование - capabilities не требуются');
+  }
 
-/* при перезагрузке выясняем, какую звезду мы уже ставили */
-api.requestCapabilities(['org.matrix.msc2762.receive_event']).then(() => {
-  if (!target) return;
-  api.observeEventRelations(target, 'm.annotation', 'm.reaction')
-     .subscribe(evts => {
-       const me   = api.widgetInfo?.userId;
-       const mine = evts.find(e =>
-         e.sender === me &&
-         e.content['m.relates_to']?.key?.startsWith('rating:'));
-       if (mine) {
-         chosen = +mine.content['m.relates_to'].key.split(':')[1];
-         paint();
-       }
-     });
-}).catch(console.error);
+  /* ----------------- UI: звёзды ----------------- */
+  const stars  = [...document.querySelectorAll('.star')];
+  let   chosen = 0;
 
-paint();        // первичная отрисовка
+  const paint = () => stars.forEach(el => {
+    const v = +el.dataset.v;
+    el.textContent = v <= chosen ? '★' : '☆';
+    el.classList.toggle('active', v <= chosen);
+  });
+
+  const send = async v => {
+    chosen = v; paint();
+    if (!target) return;                            // нет event_id → локальный режим
+    try {
+      await api.sendEvent('m.reaction', {
+        'm.relates_to': {
+          rel_type : 'm.annotation',
+          event_id : target,
+          key      : `rating:${v}`,
+        },
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  /* клики по звёздам */
+  stars.forEach(el => el.addEventListener('click', () => send(+el.dataset.v)));
+
+  /* при перезагрузке выясняем, какую звезду мы уже ставили */
+  // Упрощённая версия - пока не используем получение существующих реакций
+  if (target) {
+    console.log('Widget готов для работы с событием:', target);
+  }
+
+  paint();        // первичная отрисовка
+});
 </script>
 
 </body>
